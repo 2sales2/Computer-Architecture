@@ -4,24 +4,29 @@ use IEEE.NUMERIC_std.all;
 
 entity registerfile is 
   port(clk:           in  STD_LOGIC;
-       we:           in  STD_LOGIC;
-       ra1, ra2, wa: in  STD_LOGIC_VECTOR(4 downto 0);   -- enderecos de leitura e gravação
-       wd:           in  STD_LOGIC_VECTOR(31 downto 0);  -- conteudo a ser gravado
-       rd1, rd2:      out STD_LOGIC_VECTOR(31 downto 0)); -- portas de leitura
+       reset:         in  STD_LOGIC; 
+       we:            in  STD_LOGIC;
+       ra1, ra2, wa:  in  STD_LOGIC_VECTOR(4 downto 0);
+       wd:            in  STD_LOGIC_VECTOR(31 downto 0);
+       rd1, rd2:      out STD_LOGIC_VECTOR(31 downto 0));
 end;
 
 architecture synth of registerfile is
   type ram_type is array (31 downto 0) of STD_LOGIC_VECTOR(31 downto 0);
-  signal mem: ram_type;
+  signal mem: ram_type := (others => X"00000000"); -- Inicializa todos os registradores na declaração
+
 begin
   -- escrita sincronizada na borda de subida do sinal de clock
   process(clk) begin
     if rising_edge(clk) then
-       if we = '1' then 
-          mem(to_integer(unsigned(wa))) <= wd;
-       end if;
+        if reset = '1' then
+            mem <= (others => X"00000000"); 
+        elsif we = '1' then 
+           mem(to_integer(unsigned(wa))) <= wd;
+        end if;
     end if;
   end process;
+
   
   -- leitura combinacional 
   process(all) begin
