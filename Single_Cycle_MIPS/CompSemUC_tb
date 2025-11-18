@@ -1,0 +1,322 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity CompSemUC_tb is
+end CompSemUC_tb;
+
+architecture test of CompSemUC_tb is
+    
+    component CompSemUC is 
+	port(
+		--DataPath input
+		clk ,reset , jump , branch , MemToReg , ALUsrc , regDST , MemWrite , PCSrc , regWrite: in std_logic ;
+		AluControl : in std_logic_vector(2 downto 0));
+
+	end component;
+
+    signal clk, reset: std_logic := '0';
+    signal Instr, ReadData: std_logic_vector(31 downto 0) := (others => '0');
+    signal ALUControl: std_logic_vector(2 downto 0);
+    signal PCSrc, MemtoReg, ALUSrc, RegDst, RegWrite, Jump, Branch, MemWrite: std_logic := '0';
+    signal zero: std_logic;
+    signal PC, ALUOut, WriteData: std_logic_vector(31 downto 0);
+    constant CLK_PERIOD : time := 20 ns;
+
+begin
+
+    -- LÃ³gica para o clock
+    process
+    begin
+
+        loop
+        clk <= '0';
+        wait for CLK_PERIOD / 2; -- Metade do perÃ­odo
+
+        clk <= '1';
+        wait for CLK_PERIOD / 2; -- Metade do perÃ­odo
+
+        end loop;
+
+    end process;
+
+    
+    UUT : CompSemUC
+    port map(
+
+        clk => clk, 
+        reset => reset,
+	jump => Jump,
+	branch => Branch,
+	MemtoReg => MemtoReg,
+	ALUsrc => ALUSrc,
+	regDST => RegDst, 
+	MemWrite => MemWrite,
+	PCSrc => PCSrc,
+	regWrite => RegWrite,
+	AluControl => ALUControl
+    );
+
+    process
+    begin
+        -- Reset inicial
+        reset <= '1';
+        wait for 2 * CLK_PERIOD;
+
+        reset <= '0';
+        wait for 2 * CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componenentes para a instruÃ§Ã£o 0x20020005 (addi v0, zero, 5)
+        ALUControl <= "010";
+        ALUSrc <= '1';  
+        RegDst <= '0';   
+        MemtoReg <= '0';  
+        RegWrite <= '1';  
+        PCSrc <= '0';
+        Branch <= '0';
+        MemWrite <= '0';
+        Jump <= '0'; 
+        
+        Instr <= X"20020005"; 
+        wait for 2 * CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componenentes para a instruÃ§Ã£o para a instruÃ§Ã£o 0x2003000c	(addi v1, zero, 12)
+        ALUControl <= "010";
+        ALUSrc <= '1';  
+        RegDst <= '0';   
+        MemtoReg <= '0';  
+        RegWrite <= '1';  
+        PCSrc <= '0';
+        Branch <= '0';
+        MemWrite <= '0';
+        Jump <= '0'; 
+
+        Instr <= X"2003000c";
+        wait for CLK_PERIOD;
+      
+        -- ConfiguraÃ§Ã£o dos componenentes para a instruÃ§Ã£o para a instruÃ§Ã£o 0x2067fff7	(addi a3, v1, -9)
+        ALUControl <= "010";
+        ALUSrc <= '1';  
+        RegDst <= '0';   
+        MemtoReg <= '0';  
+        RegWrite <= '1';  
+        PCSrc <= '0';
+        Branch <= '0';
+        MemWrite <= '0';
+        Jump <= '0';
+
+        Instr <= X"2067fff7"; 
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentes para a instruÃ§Ã£o 0x00e22025 (or a0, a3, v0)
+        ALUControl <= "001";
+        ALUSrc <= '0';  
+        RegDst <= '1';   
+        MemtoReg <= '0';  
+        RegWrite <= '1';  
+        PCSrc <= '0';
+        Branch <= '0';
+        MemWrite <= '0';
+        Jump <= '0';
+
+        Instr <= X"00e22025"; 
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentens para a instruÃ§Ã£o 0x642824	(and v1, a0, a1)
+        ALUControl <= "000";
+        ALUSrc     <= '0';  
+        RegDst     <= '1';   
+        MemtoReg   <= '0';  
+        RegWrite   <= '1';
+        PCSrc <= '0';
+        Branch <= '0';
+        MemWrite <= '0';  
+        Jump       <= '0';
+
+        Instr <= X"00642824";
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentens para a instruÃ§Ã£o 0x00a42820 (add a1, a1, a0)
+        ALUControl <= "010";
+        ALUSrc <= '0';  
+        RegDst <= '1';   
+        MemtoReg <= '0';  
+        RegWrite <= '1';  
+        PCSrc <= '0';
+        Branch <= '0';
+        MemWrite <= '0';
+        Jump <= '0';
+
+        Instr <= X"00a42820";
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentes para a instruÃ§Ã£o 0x10a7000a	(beq a1, a3, 10)
+        ALUControl <= "110";
+        ALUSrc <= '0';  
+        RegDst <= '0';   
+        MemtoReg <= '0';  
+        RegWrite <= '0';  
+        PCSrc <= '1';
+        Branch <= '1';
+        MemWrite <= '0';
+        Jump <= '0';
+
+        Instr <= X"10a7000a";
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentes para a instruÃ§Ã£o 0x0064202a	(slt a0, v1, a0)
+        ALUControl <= "111";
+        ALUSrc <= '0';  
+        RegDst <= '1';   
+        MemtoReg <= '0';  
+        PCSrc <= '0';
+        Branch <= '0';
+        MemWrite <= '0';
+        RegWrite <= '1';   
+        Jump <= '0';
+
+        Instr <= X"0064202a";
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentes para a instruÃ§Ã£o 0x10800001	(beq, a0, zero, 1)
+        ALUControl <= "110";
+        ALUSrc <= '0';  
+        RegDst <= '0';   
+        MemtoReg <= '0';  
+        RegWrite <= '0';
+        PCSrc <= '1';  
+        Branch <= '1';
+        MemWrite <= '0';
+        Jump <= '0';
+
+        Instr <= X"10800001";
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentens para a instruÃ§Ã£o 0x20050000	(addi, a1, zero, 0)
+        ALUControl <= "010";
+        ALUSrc <= '1';  
+        RegDst <= '0';   
+        MemtoReg <= '0';  
+        RegWrite <= '1';   
+        PCSrc <= '0'; 
+        Branch <= '0';
+        MemWrite <= '0';
+        Jump <= '0';
+    
+        Instr <= X"20050000";
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentens para a instruÃ§Ã£o 0x00e2202a (slt v0, a3, a0)
+        ALUControl <= "111";
+        ALUSrc <= '0';  
+        RegDst <= '1';   
+        MemtoReg <= '0';  
+        RegWrite <= '1';
+        PCSrc <= '0';   
+        Branch <= '0';
+        MemWrite <= '0';
+        Jump <= '0';
+
+        Instr <= X"00e2202a";
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentes para a instruÃ§Ã£o 0x853820 (add a1, a0, a3)
+        ALUControl <= "010";
+        ALUSrc <= '0';  
+        RegDst <= '1';   
+        MemtoReg <= '0';  
+        RegWrite <= '1';
+        PCSrc <= '0';  
+        Branch <= '0';
+        MemWrite <= '0';
+        Jump <= '0';
+
+        Instr <= X"00853820";
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentes para a instruÃ§Ã£o 0x00e23822 (sub a3, a3, v0)
+        ALUControl <= "110";
+        ALUSrc <= '0';  
+        RegDst <= '1';   
+        MemtoReg <= '0';  
+        RegWrite <= '1';   
+        PCSrc <= '0';
+        Branch <= '0';
+        MemWrite <= '0';
+        Jump <= '0';
+
+        Instr <= X"00e23822";
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentes para a instruÃ§Ã£o 0xac670044 (sw a3, 68(v1))
+        ALUControl <= "010";
+        ALUSrc <= '1';  
+        RegDst <= '0';   
+        MemtoReg <= '0';  
+        RegWrite <= '0';  
+        PCSrc <= '0';
+        Branch <= '0';
+        MemWrite <= '1';
+        Jump <= '0';
+
+        Instr <= X"ac670044";
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentens para a instruÃ§Ã£o 0x8c020050	(lw, v0, 80(zero))
+        ALUControl <= "010";
+        ALUSrc <= '1';  
+        RegDst <= '0';   
+        MemtoReg <= '1';  
+        RegWrite <= '1'; 
+        PCSrc <= '0';
+        Branch <= '0';
+        MemWrite <= '0';
+        Jump <= '0';
+
+        Instr <= X"8c020050";
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentens para a instruÃ§Ã£o 0x8000011		(j +17)	
+        ALUControl <= "000"; 
+        ALUSrc <= '0';  
+        RegDst <= '0';   
+        MemtoReg <= '0';  
+        RegWrite <= '0';
+        PCSrc <= '0';  
+        Branch <= '0';
+        MemWrite <= '0';
+        Jump <= '1';
+
+        Instr <= X"08000011";
+        wait for CLK_PERIOD;
+
+        -- ConfiguraÃ§Ã£o dos componentens para a instruÃ§Ã£o 0x20020001		(addi, v1, zero, 1)
+        ALUControl <= "010"; 
+        ALUSrc <= '1';  
+        RegDst <= '0';   
+        MemtoReg <= '0';  
+        RegWrite <= '1';
+        PCSrc <= '0';   
+        Branch <= '0';
+        MemWrite <= '0';
+        Jump <= '0';
+
+        Instr <= X"20020001";
+        wait for CLK_PERIOD;
+
+     -- ConfiguraÃ§Ã£o dos componentens para a instruÃ§Ã£o 0x20020001		
+        ALUControl <= "010"; -- NÃ£o importa
+        ALUSrc <= '1';  -- NÃ£o importa
+        RegDst <= '0';   -- NÃ£o importa
+        MemtoReg <= '0';  -- NÃ£o importa
+        RegWrite <= '0';  
+        PCSrc <= '0';
+        Branch <= '0';
+        MemWrite <= '1';
+        Jump <= '0';
+
+        Instr <= X"ac020054";
+        wait;
+    end process;
+
+end test;
