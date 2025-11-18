@@ -8,7 +8,7 @@ entity DataPath is
 		clk , reset : in std_logic ;
 		zero : out std_logic ;
 		ReadData , Instr : in std_logic_vector(31 downto 0);
-		PC ,ALUOut , WriteData : buffer std_logic_vector(31 downto 0 );
+		PC ,ALUOut , WriteData : out std_logic_vector(31 downto 0 );
 
 		--UC input
 		ALUControl : in std_logic_vector(2 downto 0) ;
@@ -44,6 +44,7 @@ architecture sim of DataPath is
 	
 	component registerfile is 
 		port(clk:           in  STD_LOGIC;
+		     reset: in STD_LOGIC;
 				we:           in  STD_LOGIC;
 				ra1, ra2, wa: in  STD_LOGIC_VECTOR(4 downto 0);   -- enderecos de leitura e gravação
 				wd:           in  STD_LOGIC_VECTOR(31 downto 0);  -- conteudo a ser gravado
@@ -77,6 +78,11 @@ signal out_Mux_PC4_PCBranch : std_logic_vector(31 downto 0);
 signal PCJump : std_logic_vector(31 downto 0);
 signal out_Mux_PCJump : std_logic_vector(31 downto 0);
 
+
+signal PC_i : std_logic_vector(31 downto 0) := (others => '0');
+signal ALUOut_i : std_logic_vector(31 downto 0);
+signal WriteData_i : std_logic_vector(31 downto 0);
+
 signal SignImm : std_logic_vector(31 downto 0);
 signal SrcB : std_logic_vector(31 downto 0);
 
@@ -96,6 +102,9 @@ signal SrcA : std_logic_vector(31 downto 0);
 
 begin 
 	--Atribuicoes e slicing
+	PC <= PC_i;
+	ALUOut <= ALUOut_i;
+	WriteData <= WriteData_i;
 	Instr25_21 <= Instr(25 downto 21); 
 	Instr20_16 <= Instr(20 downto 16); 
 	Instr15_11 <= Instr(15 downto 11); 
@@ -121,7 +130,7 @@ begin
 	
 	
 	Mux_RD2_SignImm : mux2 generic map( t => 32)
-								  port map(d0 => WriteData , 
+								  port map(d0 => WriteData_i , 
 											  d1 => SignImm , 
 											  s => ALUSrc ,
 											  y => SrcB);
@@ -135,7 +144,7 @@ begin
 											  
 											  
 	Mux_ALUResult_ReadData : mux2 generic map( t => 32)
-											port map(d0 => ALUout , 
+											port map(d0 => ALUout_i , 
 														d1 => RD , 
 														s => MemtoReg ,
 														y => Result);	
@@ -145,9 +154,9 @@ begin
 						  port map(clk => clk,
 									  reset => reset, --duvida
 									  d => out_Mux_PCJump,
-									  q => PC);
+									  q => PC_i);
 	
-	RCA_PCPlus4 : rcadder port map(a => PC ,
+	RCA_PCPlus4 : rcadder port map(a => PC_i ,
 											 b => X"00000004",
 											 y => PCPlus4);
 	
@@ -171,16 +180,17 @@ begin
 	ALU : ula port map(a => SrcA,
 							 b => SrcB,
 							 alucontrol => ALUcontrol,
-							 result => ALUout ,
+							 result => ALUout_i ,
 							 zero => zero);
 	
 	RegFile : registerfile port map(clk => clk,
 											  we  => RegWrite,
+											  reset => reset,
 											  ra1 => Instr25_21,
 											  ra2 => Instr20_16,
 											  wa => WriteReg,
 											  wd => Result ,
 											  rd1 => SrcA, 
-									        rd2 => WriteData);
+									        rd2 => WriteData_i);
 	
 end sim ;			
